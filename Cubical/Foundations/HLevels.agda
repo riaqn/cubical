@@ -122,10 +122,10 @@ isPropIsOfHLevel (suc (suc n)) A f g i a b =
 isPropIsSet : isProp (isSet A)
 isPropIsSet {A = A} = isPropIsOfHLevel 2 A
 
-HLevel≡ : ∀ {A B : Set ℓ} {hA : isOfHLevel n A} {hB : isOfHLevel n B} →
-          (A ≡ B) ≡ ((A , hA) ≡ (B , hB))
-HLevel≡ {n = n} {A = A} {B = B} {hA} {hB} =
- isoToPath (iso intro elim intro-elim elim-intro)
+HLevel≃ : ∀ {A B : Set ℓ} {hA : isOfHLevel n A} {hB : isOfHLevel n B} →
+          (A ≡ B) ≃ ((A , hA) ≡ (B , hB))
+HLevel≃ {n = n} {A = A} {B = B} {hA} {hB} =
+ isoToEquiv (iso intro elim intro-elim elim-intro)
   where
     intro : A ≡ B → (A , hA) ≡ (B , hB)
     intro eq = ΣProp≡ (λ A → isPropIsOfHLevel n _) eq
@@ -141,6 +141,10 @@ HLevel≡ {n = n} {A = A} {B = B} {hA} {hB} =
 
     elim-intro : ∀ x → elim (intro x) ≡ x
     elim-intro eq = refl
+
+HLevel≡ : ∀ {A B : Set ℓ} {hA : isOfHLevel n A} {hB : isOfHLevel n B} →
+          (A ≡ B) ≡ ((A , hA) ≡ (B , hB))
+HLevel≡ {n = n} {A = A} {B = B} {hA} {hB} = ua HLevel≃
 
 -- H-level for Σ-types
 
