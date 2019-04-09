@@ -29,5 +29,9 @@ isEquivTransport : ∀ {ℓ} {A B : Set ℓ} (p : A ≡ B) → isEquiv (transpor
 isEquivTransport {A = A} {B = B} p =
   transport (λ i → isEquiv (λ x → transp (λ j → p (i ∧ j)) (~ i) x)) (idIsEquiv A)
 
+-- Transport⁻ is an equivalence
+isEquivTransport⁻ : ∀ {ℓ} {A B : Set ℓ} (p : A ≡ B) → isEquiv (transport⁻ p)
+isEquivTransport⁻ {A = A} {B = B} p = isEquivTransport (λ i → p (~ i))
+
 transportEquiv : ∀ {ℓ} {A B : Set ℓ} → A ≡ B → A ≃ B
 transportEquiv p = (transport p , isEquivTransport p)

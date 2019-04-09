@@ -48,6 +48,24 @@ private
     elim-intro : ∀ eq → elim (intro eq) ≡ eq
     elim-intro eq = refl
 
+Σ≡≡ : {x y : Σ A B}
+     {p q : x ≡ y} →
+     Σ (invEq Σ≡ p .fst ≡ invEq Σ≡   q .fst) (λ a≡ → PathP (λ i → PathP (λ j → B (a≡ i j)) (snd x) (snd y)) (invEq Σ≡ p .snd) (invEq Σ≡ q .snd)) ≃
+     (p ≡ q)
+Σ≡≡ {A = A} {B = B} {x} {y} {p} {q} = isoToEquiv (iso intro elim (λ _ → refl) (λ _ → refl))
+  where
+    intro = λ p i j → (fst p i j) , (snd p i j)
+
+    elim = λ p → (λ i j → fst (p i j )) , (λ i j → snd (p i j))
+
+-- ΣSet≡≡ : {x y : Σ A B}
+--          {p q : x ≡ y}
+--          (Bset : (a : A) → isSet (B a))
+--          (e : invEq Σ≡ p .fst ≡ invEq Σ≡ q .fst) →
+--          p ≡ q
+-- ΣSet≡≡ {B =  B} {x = x} {y} {p} {q} Bset e = {!!}
+
+
 -- Alternative version for path in Σ-types, as in the HoTT book
 
 sigmaPathTransport : (a b : Σ A B) → Set _
