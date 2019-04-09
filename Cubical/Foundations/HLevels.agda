@@ -99,7 +99,7 @@ isSet→isSet' {A = A} Aset {x} {y} {z} {w} p q r s =
   J (λ (z : A) (r : x ≡ z) → ∀ {w : A} (s : y ≡ w) (p : x ≡ y) (q : z ≡ w) → PathP (λ i → Path A (r i) (s i) ) p q) helper r s p q
   where
     helper : ∀ {w : A} (s : y ≡ w) (p : x ≡ y) (q : x ≡ w) → PathP (λ i → Path A x (s i)) p q
-    helper {w} s p q = J (λ (w : A) (s : y ≡ w) → ∀ p q → PathP (λ i → Path A x (s i)) p q) (λ p q → Aset x y p q) s p q 
+    helper {w} s p q = J (λ (w : A) (s : y ≡ w) → ∀ p q → PathP (λ i → Path A x (s i)) p q) (λ p q → Aset x y p q) s p q
 
 isSet'→isSet : isSet' A → isSet A
 isSet'→isSet {A = A} Aset' x y p q = Aset' p q refl refl
@@ -122,17 +122,17 @@ isPropIsOfHLevel (suc (suc n)) A f g i a b =
 isPropIsSet : isProp (isSet A)
 isPropIsSet {A = A} = isPropIsOfHLevel 2 A
 
-HLevel≡ : ∀ {A B : Set ℓ} {hA : isOfHLevel n A} {hB : isOfHLevel n B} →
-          (A ≡ B) ≡ ((A , hA) ≡ (B , hB))
-HLevel≡ {n = n} {A = A} {B = B} {hA} {hB} =
- isoToPath (iso intro elim intro-elim elim-intro)
+HLevel≃ : ∀ {A B : Set ℓ} {hA : isOfHLevel n A} {hB : isOfHLevel n B} →
+          (A ≡ B) ≃ ((A , hA) ≡ (B , hB))
+HLevel≃ {n = n} {A = A} {B = B} {hA} {hB} =
+ isoToEquiv (iso intro elim intro-elim elim-intro)
   where
     intro : A ≡ B → (A , hA) ≡ (B , hB)
     intro eq = ΣProp≡ (λ A → isPropIsOfHLevel n _) eq
 
     elim : (A , hA) ≡ (B , hB) → A ≡ B
     elim = cong fst
-    
+
     intro-elim : ∀ x → intro (elim x) ≡ x
     intro-elim eq = cong ΣPathP (ΣProp≡ (λ e →
       J (λ B e →
@@ -141,6 +141,10 @@ HLevel≡ {n = n} {A = A} {B = B} {hA} {hB} =
 
     elim-intro : ∀ x → elim (intro x) ≡ x
     elim-intro eq = refl
+
+HLevel≡ : ∀ {A B : Set ℓ} {hA : isOfHLevel n A} {hB : isOfHLevel n B} →
+          (A ≡ B) ≡ ((A , hA) ≡ (B , hB))
+HLevel≡ {n = n} {A = A} {B = B} {hA} {hB} = ua HLevel≃
 
 -- H-level for Σ-types
 
@@ -157,7 +161,7 @@ isOfHLevelΣ {B = B} (suc (suc n)) h1 h2 x y =
       h3 = isOfHLevelΣ (suc n) (h1 (fst x) (fst y)) λ p → h2 (p i1)
                        (subst B p (snd x)) (snd y)
   in transport (λ i → isOfHLevel (suc n) (pathSigma≡sigmaPath x y (~ i))) h3
-  
+
 hLevel≃ : ∀ n → {A B : Set ℓ} (hA : isOfHLevel n A) (hB : isOfHLevel n B) → isOfHLevel n (A ≃ B)
 hLevel≃ zero {A = A} {B = B} hA hB = A≃B , contr
   where
@@ -166,7 +170,7 @@ hLevel≃ zero {A = A} {B = B} hA hB = A≃B , contr
 
   contr : (y : A ≃ B) → A≃B ≡ y
   contr y = ΣProp≡ isPropIsEquiv (funExt (λ a → snd hB (fst y a)))
-  
+
 hLevel≃ (suc n) hA hB =
   isOfHLevelΣ (suc n) (hLevelPi (suc n) (λ _ → hB))
               (λ a → subst (λ n → isOfHLevel n (isEquiv a)) (+-comm n 1) (hLevelLift n (isPropIsEquiv a)))
@@ -180,7 +184,7 @@ hLevelRespectEquiv 1 eq hA x y i =
         (cong (eq .fst) (hA (invEquiv eq .fst x) (invEquiv eq .fst y)) i)
 hLevelRespectEquiv {A = A} {B = B} (suc (suc n)) eq hA x y =
   hLevelRespectEquiv (suc n) (invEquiv (congEquiv (invEquiv eq))) (hA _ _)
-  
+
 hLevel≡ : ∀ n → {A B : Set ℓ} (hA : isOfHLevel n A) (hB : isOfHLevel n B) →
   isOfHLevel n (A ≡ B)
 hLevel≡ n hA hB = hLevelRespectEquiv n (invEquiv univalence) (hLevel≃ n hA hB)
@@ -189,7 +193,7 @@ hLevelHLevel1 : isProp (HLevel {ℓ = ℓ} 0)
 hLevelHLevel1 x y = ΣProp≡ (λ _ → isPropIsContr) ((hLevel≡ 0 (x .snd) (y .snd) .fst))
 
 hLevelHLevelSuc : ∀ n → isOfHLevel (suc (suc n)) (HLevel {ℓ = ℓ} (suc n))
-hLevelHLevelSuc n x y = subst (λ e → isOfHLevel (suc n) e) HLevel≡ (hLevel≡ (suc n) (snd x) (snd y)) 
+hLevelHLevelSuc n x y = subst (λ e → isOfHLevel (suc n) e) HLevel≡ (hLevel≡ (suc n) (snd x) (snd y))
 
 hProp≡HLevel1 : hProp {ℓ} ≡ HLevel {ℓ} 1
 hProp≡HLevel1 {ℓ} = isoToPath (iso intro elim intro-elim elim-intro)
