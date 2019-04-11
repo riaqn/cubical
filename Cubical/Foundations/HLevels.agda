@@ -26,6 +26,7 @@ private
     ℓ ℓ' : Level
     A : Set ℓ
     B : A → Set ℓ
+    x y : A
     n : ℕ
 
 hProp : Set (ℓ-suc ℓ)
@@ -64,11 +65,26 @@ isContrSigma {A = A} {B = B} (a , p) q =
      , ( λ x i → p (x .fst) i
        , h (p (x .fst) i) (transp (λ j → B (p (x .fst) (i ∨ ~ j))) i (x .snd)) i))
 
+isProp→isPropPathP : (∀ a → isProp (B a))
+                   → (m : x ≡ y) (g : B x) (h : B y)
+                   → isProp (PathP (λ i → B (m i)) g h)
+isProp→isPropPathP {B = B} {x = x} isPropB m = J P d m where
+  P : ∀ σc → x ≡ σc → _
+  P _ m = ∀ g h → isProp (PathP (λ i → B (m i)) g h)
+  d : P x refl
+  d = isProp→isSet (isPropB x)
+
+isProp→isContrPathP : (∀ a → isProp (B a))
+                    → (m : x ≡ y) (g : B x) (h : B y)
+                    → isContr (PathP (λ i → B (m i)) g h)
+isProp→isContrPathP isPropB m g h =
+  inhProp→isContr (isProp→PathP isPropB m g h) (isProp→isPropPathP isPropB m g h)
+
+isProp→isContr≡ : isProp A → (x y : A) → isContr (x ≡ y)
+isProp→isContr≡ isPropA x y = inhProp→isContr (isPropA x y) (isProp→isSet isPropA x y)
+
 isContrPath : isContr A → (x y : A) → isContr (x ≡ y)
-isContrPath cA x y = inhProp→isContr (pA x y) (sA x y)
-  where
-  pA = isContr→isProp cA
-  sA = isProp→isSet pA
+isContrPath cA = isProp→isContr≡ (isContr→isProp cA)
 
 -- Π preserves propositionality in the following sense:
 propPi : (h : (x : A) → isProp (B x)) → isProp ((x : A) → B x)
@@ -99,7 +115,7 @@ isSet→isSet' {A = A} Aset {x} {y} {z} {w} p q r s =
   J (λ (z : A) (r : x ≡ z) → ∀ {w : A} (s : y ≡ w) (p : x ≡ y) (q : z ≡ w) → PathP (λ i → Path A (r i) (s i) ) p q) helper r s p q
   where
     helper : ∀ {w : A} (s : y ≡ w) (p : x ≡ y) (q : x ≡ w) → PathP (λ i → Path A x (s i)) p q
-    helper {w} s p q = J (λ (w : A) (s : y ≡ w) → ∀ p q → PathP (λ i → Path A x (s i)) p q) (λ p q → Aset x y p q) s p q 
+    helper {w} s p q = J (λ (w : A) (s : y ≡ w) → ∀ p q → PathP (λ i → Path A x (s i)) p q) (λ p q → Aset x y p q) s p q
 
 isSet'→isSet : isSet' A → isSet A
 isSet'→isSet {A = A} Aset' x y p q = Aset' p q refl refl
@@ -132,7 +148,7 @@ HLevel≡ {n = n} {A = A} {B = B} {hA} {hB} =
 
     elim : (A , hA) ≡ (B , hB) → A ≡ B
     elim = cong fst
-    
+
     intro-elim : ∀ x → intro (elim x) ≡ x
     intro-elim eq = cong ΣPathP (ΣProp≡ (λ e →
       J (λ B e →
@@ -157,7 +173,7 @@ isOfHLevelΣ {B = B} (suc (suc n)) h1 h2 x y =
       h3 = isOfHLevelΣ (suc n) (h1 (fst x) (fst y)) λ p → h2 (p i1)
                        (subst B p (snd x)) (snd y)
   in transport (λ i → isOfHLevel (suc n) (pathSigma≡sigmaPath x y (~ i))) h3
-  
+
 hLevel≃ : ∀ n → {A B : Set ℓ} (hA : isOfHLevel n A) (hB : isOfHLevel n B) → isOfHLevel n (A ≃ B)
 hLevel≃ zero {A = A} {B = B} hA hB = A≃B , contr
   where
@@ -166,7 +182,7 @@ hLevel≃ zero {A = A} {B = B} hA hB = A≃B , contr
 
   contr : (y : A ≃ B) → A≃B ≡ y
   contr y = ΣProp≡ isPropIsEquiv (funExt (λ a → snd hB (fst y a)))
-  
+
 hLevel≃ (suc n) hA hB =
   isOfHLevelΣ (suc n) (hLevelPi (suc n) (λ _ → hB))
               (λ a → subst (λ n → isOfHLevel n (isEquiv a)) (+-comm n 1) (hLevelLift n (isPropIsEquiv a)))
@@ -180,7 +196,7 @@ hLevelRespectEquiv 1 eq hA x y i =
         (cong (eq .fst) (hA (invEquiv eq .fst x) (invEquiv eq .fst y)) i)
 hLevelRespectEquiv {A = A} {B = B} (suc (suc n)) eq hA x y =
   hLevelRespectEquiv (suc n) (invEquiv (congEquiv (invEquiv eq))) (hA _ _)
-  
+
 hLevel≡ : ∀ n → {A B : Set ℓ} (hA : isOfHLevel n A) (hB : isOfHLevel n B) →
   isOfHLevel n (A ≡ B)
 hLevel≡ n hA hB = hLevelRespectEquiv n (invEquiv univalence) (hLevel≃ n hA hB)
@@ -189,7 +205,7 @@ hLevelHLevel1 : isProp (HLevel {ℓ = ℓ} 0)
 hLevelHLevel1 x y = ΣProp≡ (λ _ → isPropIsContr) ((hLevel≡ 0 (x .snd) (y .snd) .fst))
 
 hLevelHLevelSuc : ∀ n → isOfHLevel (suc (suc n)) (HLevel {ℓ = ℓ} (suc n))
-hLevelHLevelSuc n x y = subst (λ e → isOfHLevel (suc n) e) HLevel≡ (hLevel≡ (suc n) (snd x) (snd y)) 
+hLevelHLevelSuc n x y = subst (λ e → isOfHLevel (suc n) e) HLevel≡ (hLevel≡ (suc n) (snd x) (snd y))
 
 hProp≡HLevel1 : hProp {ℓ} ≡ HLevel {ℓ} 1
 hProp≡HLevel1 {ℓ} = isoToPath (iso intro elim intro-elim elim-intro)
@@ -208,3 +224,17 @@ hProp≡HLevel1 {ℓ} = isoToPath (iso intro elim intro-elim elim-intro)
 
 isSetHProp : isSet (hProp {ℓ = ℓ})
 isSetHProp = subst (λ X → isOfHLevel 2 X) (sym hProp≡HLevel1) (hLevelHLevelSuc 0)
+
+
+isContrPartial→isContr : ∀ {ℓ} {A : Set ℓ}
+                       → (extend : ∀ φ → Partial φ A → A)
+                       → (∀ u → u ≡ (extend i1 λ { _ → u}))
+                       → isContr A
+isContrPartial→isContr {A = A} extend law
+  = ex , λ y → law ex ∙ (λ i → Aux.v y i) ∙ sym (law y)
+    where ex = extend i0 empty
+          module Aux (y : A) (i : I) where
+            φ = ~ i ∨ i
+            u : Partial φ A
+            u = λ { (i = i0) → ex ; (i = i1) → y }
+            v = extend φ u
