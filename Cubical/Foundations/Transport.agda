@@ -9,6 +9,7 @@ module Cubical.Foundations.Transport where
 
 open import Cubical.Core.Everything
 
+open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Equiv
 
 transport⁻ : ∀ {ℓ} {A B : Set ℓ} → A ≡ B → B → A
@@ -28,6 +29,10 @@ transportTransport⁻ p b j =
 isEquivTransport : ∀ {ℓ} {A B : Set ℓ} (p : A ≡ B) → isEquiv (transport p)
 isEquivTransport {A = A} {B = B} p =
   transport (λ i → isEquiv (λ x → transp (λ j → p (i ∧ j)) (~ i) x)) (idIsEquiv A)
+
+-- Transport⁻ is an equivalence
+isEquivTransport⁻ : ∀ {ℓ} {A B : Set ℓ} (p : A ≡ B) → isEquiv (transport⁻ p)
+isEquivTransport⁻ {A = A} {B = B} p = isEquivTransport (λ i → p (~ i))
 
 transportEquiv : ∀ {ℓ} {A B : Set ℓ} → A ≡ B → A ≃ B
 transportEquiv p = (transport p , isEquivTransport p)

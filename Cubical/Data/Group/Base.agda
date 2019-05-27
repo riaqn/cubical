@@ -9,13 +9,12 @@ import Cubical.Core.Glue as G
 import Cubical.Foundations.Equiv as E
 import Cubical.Foundations.HAEquiv as HAE
 
-
 record isGroup {ℓ} (A : Set ℓ) : Set ℓ where
   constructor group-struct
   field
     id  : A
     inv  : A → A
-    comp   : A → A → A
+    comp : A → A → A
     lUnit : ∀ a → comp id a ≡ a
     rUnit : ∀ a → comp a id ≡ a
     assoc  : ∀ a b c → comp (comp a b) c ≡ comp a (comp b c)

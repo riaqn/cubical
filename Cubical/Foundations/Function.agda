@@ -5,7 +5,10 @@
 module Cubical.Foundations.Function where
 
 open import Cubical.Core.Everything
-open import Cubical.Core.Glue public using (idfun)
+
+-- The identity function
+idfun : ∀ {ℓ} → (A : Set ℓ) → A → A
+idfun _ x = x
 
 infixr 9 _∘_
 

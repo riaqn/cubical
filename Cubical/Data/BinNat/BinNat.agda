@@ -61,10 +61,9 @@ http://www.cs.bham.ac.uk/~mhe/agda-new/BinaryNaturals.html
 {-# OPTIONS --cubical --no-exact-split --safe #-}
 module Cubical.Data.BinNat.BinNat where
 
-open import Cubical.Core.Primitives
-open import Cubical.Core.Prelude
 open import Cubical.Core.Glue
 
+open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.Univalence
 open import Cubical.Foundations.Isomorphism

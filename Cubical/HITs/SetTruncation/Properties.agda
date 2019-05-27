@@ -8,11 +8,11 @@ This file contains:
 {-# OPTIONS --cubical --safe #-}
 module Cubical.HITs.SetTruncation.Properties where
 
-open import Cubical.HITs.SetTruncation.Base
-
-open import Cubical.Core.Prelude
 open import Cubical.Core.Glue
 
+open import Cubical.HITs.SetTruncation.Base
+
+open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.HLevels
@@ -70,3 +70,18 @@ elimSetTrunc3 : {B : (x y z : ∥ A ∥₀) → Set ℓ}
                 (x y z : ∥ A ∥₀) → B x y z
 elimSetTrunc3 Bset g = elimSetTrunc2 (λ _ _ → hLevelPi 2 λ _ → Bset _ _ _) (λ a b →
                        elimSetTrunc (λ _ → Bset _ _ _) (λ c → g a b c))
+
+idemSetTrunc : isSet A → ∥ A ∥₀ ≃ A
+idemSetTrunc {A = A} Aset = isoToEquiv (iso f g f-g g-f)
+  where
+    f : ∥ A ∥₀ → A
+    f = elimSetTrunc (λ _ → Aset) λ a → a
+
+    g : A → ∥ A ∥₀
+    g = ∣_∣₀
+
+    f-g : ∀ a → f (g a) ≡ a
+    f-g a = refl
+
+    g-f : ∀ x → g (f x) ≡ x
+    g-f = elimSetTrunc (λ _ → isProp→isSet (squash₀ _ _)) (λ _ → refl)

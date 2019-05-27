@@ -1,7 +1,7 @@
 {-# OPTIONS --cubical --safe --guardedness #-}
 module Cubical.Codata.M where
 
-open import Cubical.Core.Prelude
+open import Cubical.Foundations.Prelude
 
 -- TODO move
 module Helpers where

@@ -27,10 +27,12 @@ module Cubical.Data.Int.Properties where
 
 open import Cubical.Core.Everything
 
+open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.Transport
 open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Isomorphism
+open import Cubical.Foundations.Univalence
 
 open import Cubical.Data.Empty
 open import Cubical.Data.Nat hiding (_+_ ; +-assoc ; +-comm)
