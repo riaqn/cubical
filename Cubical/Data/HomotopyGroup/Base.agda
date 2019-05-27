@@ -8,8 +8,8 @@ open import Cubical.Foundations.HLevels
 open import Cubical.Data.Group.Base
 import Cubical.Foundations.GroupoidLaws as GL
 
-Pointed : ∀ {ℓ} → Set (ℓ-suc ℓ)
-Pointed {ℓ} = Σ[ A ∈ Set ℓ ] A
+Pointed : ∀ {ℓ} → Type (ℓ-suc ℓ)
+Pointed {ℓ} = Σ[ A ∈ Type ℓ ] A
 
 Ω : ∀ {ℓ} → Pointed {ℓ} → Pointed {ℓ}
 Ω (A , a ) = ( (a ≡ a) , refl)
@@ -24,7 +24,7 @@ Pointed {ℓ} = Σ[ A ∈ Set ℓ ] A
     n' : ℕ
     n' = suc n
 
-    A : Set ℓ
+    A : Type ℓ
     A = (Ω^ n') p .fst
 
     g : isGroup ∥ A ∥₀

@@ -25,8 +25,8 @@ open import Cubical.Data.Nat
 private
   variable
     ℓ : Level
-    A : Set ℓ
-    B : (a : A) → Set ℓ
+    A : Type ℓ
+    B : (a : A) → Type ℓ
 
 
 ΣPathP : ∀ {x y}
@@ -70,11 +70,11 @@ private
 
 -- Alternative version for path in Σ-types, as in the HoTT book
 
-sigmaPathTransport : (a b : Σ A B) → Set _
+sigmaPathTransport : (a b : Σ A B) → Type _
 sigmaPathTransport {B = B} a b =
   Σ (fst a ≡ fst b) (λ p → transport (λ i → B (p i)) (snd a) ≡ snd b)
 
-_Σ≡T_ : (a b : Σ A B) → Set _
+_Σ≡T_ : (a b : Σ A B) → Type _
 a Σ≡T b = sigmaPathTransport a b
 
 -- now we prove that the alternative path space a Σ≡ b is equal to the usual path space a ≡ b
@@ -127,7 +127,7 @@ private
                   ; (j = i1) → snd (sigmaPath→pathSigma a b p t)
                   ; (i = i0) → snd (filler-comp a b p t j)
                   ; (i = i1) → filler-π2 (sigmaPath→pathSigma a b p) j t })
-         (inS (snd a))
+         (snd a)
 
 pathSigma→sigmaPath→pathSigma : {a b : Σ A B} →
   ∀ (x : a Σ≡T b) → pathSigma→sigmaPath _ _ (sigmaPath→pathSigma a b x) ≡ x
