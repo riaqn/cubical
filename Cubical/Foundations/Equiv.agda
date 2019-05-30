@@ -93,12 +93,18 @@ equivToIso {A = A} {B = B} e = iso (e .fst) (invEq e ) (retEq e) (secEq e)
 invEquiv : A ≃ B → B ≃ A
 invEquiv f = isoToEquiv (iso (invEq f) (fst f) (secEq f) (retEq f))
 
+invEquivIdEquiv : (A : Type ℓ) → invEquiv (idEquiv A) ≡ idEquiv A
+invEquivIdEquiv _ = equivEq _ _ refl
+
 compEquiv : A ≃ B → B ≃ C → A ≃ C
 compEquiv f g = isoToEquiv
                   (iso (λ x → g .fst (f .fst x))
                        (λ x → invEq f (invEq g x))
                        (λ y → (cong (g .fst) (retEq f (invEq g y))) ∙ (retEq g y))
                        (λ y → (cong (invEq f) (secEq g (f .fst y))) ∙ (secEq f y)))
+
+compEquivIdEquiv : {A B : Type ℓ} (e : A ≃ B) → compEquiv (idEquiv A) e ≡ e
+compEquivIdEquiv e = equivEq _ _ refl
 
 compIso : ∀ {ℓ ℓ' ℓ''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''} →
             Iso A B → Iso B C → Iso A C
@@ -138,3 +144,16 @@ Hfa≡fHa {A = A} f H a =
   cong f (H a) ∙ H a ∙ sym (H a)   ≡⟨ cong (_∙_ (cong f (H a))) (rCancel _) ⟩
   cong f (H a) ∙ refl              ≡⟨ sym (rUnit _) ⟩
   cong f (H a) ∎
+
+equivPi
+  : ∀{F : A → Set ℓ} {G : A → Set ℓ'}
+  → ((x : A) → F x ≃ G x) → (((x : A) → F x) ≃ ((x : A) → G x))
+equivPi k .fst f x = k x .fst (f x)
+equivPi k .snd .equiv-proof f
+  .fst .fst x = equivCtr (k x) (f x) .fst
+equivPi k .snd .equiv-proof f
+  .fst .snd i x = equivCtr (k x) (f x) .snd i
+equivPi k .snd .equiv-proof f
+  .snd (g , p) i .fst x = equivCtrPath (k x) (f x) (g x , λ j → p j x) i .fst
+equivPi k .snd .equiv-proof f
+  .snd (g , p) i .snd j x = equivCtrPath (k x) (f x) (g x , λ k → p k x) i .snd j
