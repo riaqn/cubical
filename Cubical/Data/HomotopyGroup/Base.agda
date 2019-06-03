@@ -1,7 +1,7 @@
 {-# OPTIONS --cubical --safe #-}
 module Cubical.Data.HomotopyGroup.Base where
 
-open import Cubical.Core.Prelude
+open import Cubical.Foundations.Prelude
 open import Cubical.Data.Nat
 open import Cubical.HITs.SetTruncation
 open import Cubical.Foundations.HLevels

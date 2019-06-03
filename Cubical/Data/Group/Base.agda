@@ -2,12 +2,13 @@
 
 module Cubical.Data.Group.Base where
 
-open import Cubical.Core.Prelude hiding (comp)
-open import Cubical.Data.Sigma
+open import Cubical.Foundations.Transport
 import Cubical.Foundations.Isomorphism as I
 import Cubical.Core.Glue as G
 import Cubical.Foundations.Equiv as E
 import Cubical.Foundations.HAEquiv as HAE
+open import Cubical.Foundations.Prelude hiding(comp)
+import Cubical.Data.Sigma as S
 
 record isGroup {ℓ} (A : Type ℓ) : Type ℓ where
   constructor group-struct
@@ -52,6 +53,17 @@ record Iso' {ℓ ℓ'} (G : Group {ℓ}) (H : Group {ℓ'}) : Type (ℓ-max ℓ 
 
 _≃_ : ∀ {ℓ ℓ'} (A : Group {ℓ}) (B : Group {ℓ'}) → Type (ℓ-max ℓ ℓ')
 A ≃ B = Σ (morph A B) \ f → (G.isEquiv (f .fst))
+
+transportGroup : ∀ {ℓ} (G : Group {ℓ}) {H : Type ℓ} (p : Group.type G ≡ H ) → Group {ℓ}
+transportGroup (group G Gset Ggroup) {H} p = group H (subst isSet p Gset) (subst isGroup p Ggroup)
+
+transportIso : ∀ {ℓ} {G : Group {ℓ}} {H : Type ℓ} (p : Group.type G ≡ H ) → Iso G (transportGroup G p)
+transportIso {G = G} p = iso ((transport p) , helper ) ((transport⁻ p) , λ g0 g1 → transport⁻Transport p _) (transportTransport⁻ p) (transport⁻Transport p)
+             where
+               helper : isMorph G (transportGroup G p) (transport p)
+               helper g0 g1 = cong (λ b → transp (λ i → p i) i0
+                                          (isGroup.comp (Group.groupStruc G) (fst b) (snd b)))
+                                   (fst S.Σ≡ ((sym (transport⁻Transport p g0)) , (sym (transport⁻Transport p g1))))
 
 Iso'→Iso : ∀ {ℓ ℓ'} {G : Group {ℓ}} {H : Group {ℓ'}} → Iso' G  H → Iso G H
 Iso'→Iso {G = group G Gset Ggroup} {H = group H Hset Hgroup} i = iso (fun , funMorph) (inv , invMorph) rightInv leftInv
