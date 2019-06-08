@@ -11,6 +11,7 @@ module Cubical.HITs.SetTruncation.Properties where
 open import Cubical.Core.Glue
 
 open import Cubical.HITs.SetTruncation.Base
+open import Cubical.HITs.Truncation
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Isomorphism
@@ -73,3 +74,19 @@ idemSetTrunc {A = A} Aset = isoToEquiv (iso f g f-g g-f)
 
     g-f : ∀ x → g (f x) ≡ x
     g-f = elimSetTrunc (λ _ → isProp→isSet (squash₀ _ _)) (λ _ → refl)
+
+∥∥2≃∥∥₀ : ∥ A ∥ 2 ≃ ∥ A ∥₀
+∥∥2≃∥∥₀ {A = A} = isoToEquiv (iso intro elim intro-elim elim-intro)
+  where
+    intro : ∥ A ∥ 2 → ∥ A ∥₀
+    intro = ind (λ x → squash₀) ∣_∣₀
+
+    elim : ∥ A ∥₀ → ∥ A ∥ 2
+    elim = elimSetTrunc (λ _ → isOfHLevel∥∥ {n = 1}) ∣_∣
+
+    intro-elim : ∀ x → intro (elim x) ≡ x
+    intro-elim = elimSetTrunc (λ _ → hLevelLift {n = 1} 1 (squash₀ _ _)) (λ _ → refl)
+
+    elim-intro : ∀ x → elim (intro x) ≡ x
+    elim-intro = ind (λ _ → hLevelLift {n = 1} 1 (isOfHLevel∥∥ {n = 1} _ _)) (λ  _ → refl)
+

@@ -8,6 +8,7 @@ open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.Isomorphism
 
 open import Cubical.Data.Bool
+open import Cubical.Data.Nat
 
 open import Cubical.HITs.S1
 open import Cubical.HITs.S2

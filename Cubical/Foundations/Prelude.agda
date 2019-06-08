@@ -131,12 +131,25 @@ transport p a = transp (λ i → p i) i0 a
 transportRefl : (x : A) → transport refl x ≡ x
 transportRefl {A = A} x i = transp (λ _ → A) i x
 
+
 -- We want B to be explicit in subst
 subst : (B : A → Type ℓ') (p : x ≡ y) → B x → B y
 subst B p pa = transport (λ i → B (p i)) pa
 
 substRefl : (px : B x) → subst B refl px ≡ px
 substRefl px = transportRefl px
+
+transport≡' : {A B : Type ℓ} {p : A ≡ B} {a : A} →  PathP (λ i → p i) (transport refl a) (transport p a)
+transport≡' {A = A} {p = p} {a = a} i = transport q a
+  where
+  q : A ≡ p i
+  q j = p (i ∧ j)
+
+transport≡ : {A B : Type ℓ} {p : A ≡ B} {a : A} →  PathP (λ i → p i) a (transport p a)
+transport≡ {p = p} {a = a} = subst (λ x → PathP (λ i → p i) x (transport p a)) (transportRefl a) (transport≡')
+
+subst≡ : {p : x ≡ y} {b : B x} → PathP (λ i → B (p i)) b (subst B p b)
+subst≡ = transport≡
 
 funExt : {f g : (x : A) → B x} → ((x : A) → f x ≡ g x) → f ≡ g
 funExt p i x = p x i

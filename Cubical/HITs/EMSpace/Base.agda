@@ -3,6 +3,7 @@ module Cubical.HITs.EMSpace.Base where
 open import Cubical.Data.Group
 open import Cubical.Foundations.Prelude hiding (comp)
 open import Cubical.Data.HomotopyGroup
+open import Cubical.Data.Pointed
 
 open Group
 open isGroup

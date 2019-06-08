@@ -6,9 +6,11 @@ open import Cubical.Foundations.Transport
 import Cubical.Foundations.Isomorphism as I
 import Cubical.Core.Glue as G
 import Cubical.Foundations.Equiv as E
+import Cubical.Foundations.Univalence as U
 import Cubical.Foundations.HAEquiv as HAE
 open import Cubical.Foundations.Prelude hiding(comp)
 import Cubical.Data.Sigma as S
+import Cubical.Foundations.HLevels as H
 
 record isGroup {ℓ} (A : Type ℓ) : Type ℓ where
   constructor group-struct
@@ -20,7 +22,7 @@ record isGroup {ℓ} (A : Type ℓ) : Type ℓ where
     rUnit : ∀ a → comp a id ≡ a
     assoc  : ∀ a b c → comp (comp a b) c ≡ comp a (comp b c)
     lCancel  : ∀ a → comp (inv a) a ≡ id
-    rCalcel : ∀ a → comp a (inv a) ≡ id
+    rCancel : ∀ a → comp a (inv a) ≡ id
 
 record Group {ℓ} : Type (ℓ-suc ℓ) where
   constructor group
@@ -28,6 +30,7 @@ record Group {ℓ} : Type (ℓ-suc ℓ) where
     type : Type ℓ
     setStruc : isSet type
     groupStruc : isGroup type
+
 
 isMorph : ∀ {ℓ ℓ'} (G : Group {ℓ}) (H : Group {ℓ'}) → (f : (Group.type G → Group.type H)) → Type (ℓ-max ℓ ℓ')
 isMorph (group G Gset (group-struct _ _ _⊙_ _ _ _ _ _))
@@ -52,18 +55,7 @@ record Iso' {ℓ ℓ'} (G : Group {ℓ}) (H : Group {ℓ'}) : Type (ℓ-max ℓ 
     isoSetMorph : isMorph G H (I.Iso.fun isoSet)
 
 _≃_ : ∀ {ℓ ℓ'} (A : Group {ℓ}) (B : Group {ℓ'}) → Type (ℓ-max ℓ ℓ')
-A ≃ B = Σ (morph A B) \ f → (G.isEquiv (f .fst))
-
-transportGroup : ∀ {ℓ} (G : Group {ℓ}) {H : Type ℓ} (p : Group.type G ≡ H ) → Group {ℓ}
-transportGroup (group G Gset Ggroup) {H} p = group H (subst isSet p Gset) (subst isGroup p Ggroup)
-
-transportIso : ∀ {ℓ} {G : Group {ℓ}} {H : Type ℓ} (p : Group.type G ≡ H ) → Iso G (transportGroup G p)
-transportIso {G = G} p = iso ((transport p) , helper ) ((transport⁻ p) , λ g0 g1 → transport⁻Transport p _) (transportTransport⁻ p) (transport⁻Transport p)
-             where
-               helper : isMorph G (transportGroup G p) (transport p)
-               helper g0 g1 = cong (λ b → transp (λ i → p i) i0
-                                          (isGroup.comp (Group.groupStruc G) (fst b) (snd b)))
-                                   (fst S.Σ≡ ((sym (transport⁻Transport p g0)) , (sym (transport⁻Transport p g1))))
+A ≃ B = Σ[ f ∈ Group.type A G.≃ Group.type B ] (isMorph A B (f .fst))
 
 Iso'→Iso : ∀ {ℓ ℓ'} {G : Group {ℓ}} {H : Group {ℓ'}} → Iso' G  H → Iso G H
 Iso'→Iso {G = group G Gset Ggroup} {H = group H Hset Hgroup} i = iso (fun , funMorph) (inv , invMorph) rightInv leftInv
@@ -109,16 +101,16 @@ Iso'→Iso {G = group G Gset Ggroup} {H = group H Hset Hgroup} i = iso (fun , fu
            fun ((inv h0) ⊙ (inv h1)) ∎ )
 
 
-Equiv→Iso' : ∀ {ℓ ℓ'} {G : Group {ℓ}} {H : Group {ℓ'}} → G ≃ H → Iso' G H
-Equiv→Iso' {G = group G Gset Ggroup}
-           {H = group H Hset Hgroup}
-           e = iso' i' (e .fst .snd)
-  where
-    e' : G G.≃ H
-    e' = (e .fst .fst) , (e .snd)
+-- Equiv→Iso' : ∀ {ℓ ℓ'} {G : Group {ℓ}} {H : Group {ℓ'}} → G ≃ H → Iso' G H
+-- Equiv→Iso' {G = group G Gset Ggroup}
+--            {H = group H Hset Hgroup}
+--            e = iso' i' (e .fst .snd)
+--   where
+--     e' : G G.≃ H
+--     e' = (e .fst .fst) , (e .snd)
 
-    i' : I.Iso G H
-    i' = E.equivToIso e'
+--     i' : I.Iso G H
+--     i' = E.equivToIso e'
 
 compMorph : ∀ {ℓ} {F G H : Group {ℓ}} (I : morph F G) (J : morph G H) → morph F H
 compMorph {ℓ} {group F Fset (group-struct _ _ _⊙_ _ _ _ _ _)}
@@ -173,3 +165,10 @@ compIso {ℓ} {F} {G} {H}
     ret f = h→f (f→h f) ≡⟨ cong g→f (hg (f→g f)) ⟩
              g→f (f→g f) ≡⟨ gf _ ⟩
              f ∎
+
+transportGroup : ∀ {ℓ} (G : Group {ℓ}) {H : Type ℓ} (p : Group.type G ≡ H ) → Group {ℓ}
+transportGroup (group G Gset Ggroup) {H} p = group H (subst isSet p Gset) (subst isGroup p Ggroup)
+
+transportGroup≡ : ∀ {ℓ} {G : Group {ℓ}} {H : Type ℓ} (p : Group.type G ≡ H ) → G ≡ transportGroup G p
+transportGroup≡ {G = group G Gset Ggroup} p i = group (p i) (subst≡ {B = isSet} {p = p} {b = Gset} i) (subst≡ {B = isGroup} {p = p} {b = Ggroup} i)
+

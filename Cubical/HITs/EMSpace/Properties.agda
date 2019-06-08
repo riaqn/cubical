@@ -10,7 +10,7 @@ open import Cubical.Foundations.HLevels
 open import Cubical.Core.Glue
 open import Cubical.Foundations.Univalence using (ua; uaIdEquiv; uaCompEquiv)
 open import Cubical.Foundations.Transport
-open import Cubical.HITs.SetTruncation
+open import Cubical.HITs.Truncation renaming (ind to tind) 
 
 import Cubical.Foundations.HAEquiv as HAE
 import Cubical.Foundations.Isomorphism as I
@@ -23,17 +23,6 @@ private
 
 open Group
 open isGroup
-
-lemma : ∀ {A : Set ℓ} {B : Set ℓ'} (f : A → B)
-        {x y z : A}
-        (p : x ≡ y)
-        (q : y ≡ z) →
-        cong f (p ∙ q) ≡ (cong f p) ∙ (cong f q)
-lemma f {x} {y} {z} p q i j = hcomp (λ k → λ { (i = i0) → f (compPath-filler p q k j)
-                                        ; (i = i1) → compPath-filler (cong f p) (cong f q) k j
-                                        ; (j = i0) → f x
-                                        ; (j = i1) → f (q k)})
-                               (f (p j))
 
 ind : {B : (EMSpace1 G) → Set ℓ'}
       (Bbase : B base)
@@ -82,15 +71,11 @@ some-result {ℓ} {G = group G Gset (isGroup.group-struct id inv _⊙_ lUnit rUn
   G_ : Group {ℓ}
   G_ = group G Gset (isGroup.group-struct id inv _⊙_ lUnit rUnit assoc lCancel rCancel)
 
-  base' : EMSpace1 G_
-  base' = base
-
-  e' : (base' ≡ base') ≃ G
   e' = code-loop {code = λ x → codes x .fst } id decode (λ c → (transportRefl (c ⊙ id)) ∙ (rUnit c)) loop-id
     where
 
     codes : EMSpace1 G_ → HLevel 2
-    codes = ind (G , Gset) Gloop ? ? (λ _ → hLevelHLevelSuc 1)
+    codes = ind (G , Gset) Gloop {!Gloop-id!} {!!} (λ _ → hLevelHLevelSuc 1)
       where
         Gloop' : G → G ≃ G
         Gloop' g = (E.isoToEquiv (I.iso (_⊙_ g) (_⊙_ (inv g)) rightInv leftInv))
@@ -115,12 +100,14 @@ some-result {ℓ} {G = group G Gset (isGroup.group-struct id inv _⊙_ lUnit rUn
         Gloop : G → (G , Gset) ≡ (G , Gset)
         Gloop g = (HLevel≃ {n = 2}) .fst (ua (Gloop' g))
 
-        Gloop-id : Gloop id ≡ refl
-        Gloop-id = E.invEq (HAE.congEquiv (E.invEquiv (HLevel≃ {n = 2}))) (subst (λ e → ua e ≡ refl) (sym Gloop'-id) uaIdEquiv)
+        Gloop-id : Gloop id ≡ refl {x = (G , Gset)}
+        Gloop-id = {!!}
+
+        -- E.invEq (HAE.congEquiv (E.invEquiv (HLevel≃ {n = 2}))) {!!}
+        -- (subst (λ e → ua e ≡ refl) (sym Gloop'-id) uaIdEquiv)
 
         Gloop'-comp : (g h : G) → Gloop' (h ⊙ g) ≡ E.compEquiv (Gloop' g) (Gloop' h)
         Gloop'-comp g h = E.equivEq _ _ (funExt (λ x → assoc _ _ _))
-
 
         Gloop-comp : (g h : G) → Gloop (h ⊙ g) ≡ Gloop g ∙ Gloop h
         Gloop-comp g h = E.invEq (HAE.congEquiv (E.invEquiv (HLevel≃ {n = 2})))
@@ -136,20 +123,20 @@ some-result {ℓ} {G = group G Gset (isGroup.group-struct id inv _⊙_ lUnit rUn
                                                }) (compPath-filler (Gloop g) (Gloop h) i j)
 
     decode : {a : EMSpace1 G_} → codes a .fst → base ≡ a
-    decode {a = a} = ?
+    decode {a = a} = {!!}
       where
         loop-loop : (g : G) →
           PathP (λ i → codes (loop g i) .fst → base ≡ loop g i) loop loop
         loop-loop g = {!!}
 
-  p : ∥ base' ≡ base' ∥₀ ≡ (base' ≡ base')
-  p = ua (idemSetTrunc (squash _ _))
+  p : (∥ base ≡ base ∥ 2) ≡ (base ≡ base)
+  p = ua (idemTrunc (squash _ _))
 
   G' : Group
-  G' = G.transportGroup ((π^ 0) (EMSpace1Pointed G_)) p
+  G' = G.transportGroup (π^ 0 (EMSpace1Pointed G_)) p
 
   EM≃G' : G.Iso ((π^ 0) (EMSpace1Pointed G_)) G'
   EM≃G' = G.transportIso p
 
-  G'≃G : G.Iso G' G_
-  G'≃G = ?
+  -- G'≃G : G.Iso G' G_
+  -- G'≃G = ?
