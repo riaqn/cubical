@@ -1,5 +1,4 @@
-
-{-# OPTIONS --cubical --safe #-}
+{-# OPTIONS --cubical #-}
 module Cubical.HITs.EMSpace.Properties where
 
 open import Cubical.HITs.EMSpace.Base
@@ -10,7 +9,8 @@ open import Cubical.Foundations.HLevels
 open import Cubical.Core.Glue
 open import Cubical.Foundations.Univalence using (ua; uaIdEquiv; uaCompEquiv)
 open import Cubical.Foundations.Transport
-open import Cubical.HITs.Truncation renaming (ind to tind) 
+open import Cubical.HITs.Truncation renaming (ind to tind)
+open import Cubical.Data.Sigma hiding (comp)
 
 import Cubical.Foundations.HAEquiv as HAE
 import Cubical.Foundations.Isomorphism as I
@@ -28,7 +28,7 @@ ind : {B : (EMSpace1 G) → Set ℓ'}
       (Bbase : B base)
       (Bloop : (g : G .type) → PathP (λ i → B (loop g i)) Bbase Bbase)
       (Bloop-id : PathP (λ i → PathP (λ j → B (loop-id i j)) Bbase Bbase) (Bloop (G .groupStruc .id)) refl)
-      (Bloop-comp : (g h : G .type) → PathP (λ i → PathP (λ j → B (loop-comp g h i j)) Bbase (Bloop h i)) (Bloop g) (Bloop (G .groupStruc .comp h g)))
+      (Bloop-comp : (g h : G .type) → PathP (λ i → PathP (λ j → B (loop-comp g h i j)) Bbase (Bloop h i)) (Bloop g) (Bloop (G .groupStruc .comp g h)))
       (Bsquash : (x : EMSpace1 G) → isOfHLevel 3 (B x))
       (x : EMSpace1 G) →
       B x
@@ -43,6 +43,27 @@ ind {G = G} {B = B} Bbase Bloop Bloop-id Bloop-comp Bsquash (squash x y p q r s 
 
     Bsquash' : (x y : EMSpace1 G) (p q : x ≡ y) (r s : p ≡ q) → PathP (λ i → PathP (λ j → PathP (λ k → B (squash x y p q r s i j k)) (ind' x) (ind' y)) (cong ind' p) (cong ind' q)) (cong (cong ind') r) (cong (cong ind') s)
     Bsquash' x y p q r s = isOfHLevel→isOfHLevelDep {n = 3} Bsquash (ind' x) (ind' y) (cong ind' p) (cong ind' q) (cong (cong ind') r) (cong (cong ind') s) (squash x y p q r s)
+
+ind' : {B : (EMSpace1 G) → Set ℓ'}
+      (Bbase : B base)
+      (Bloop : (g : G .type) → PathP (λ i → B (loop g i)) Bbase Bbase)
+      (Bsquash : (x : EMSpace1 G) → isOfHLevel 2 (B x))
+      (x : EMSpace1 G) →
+      B x
+ind' {G = G} {B = B} Bbase Bloop Bsquash x = ind {B = B} Bbase Bloop Bloop-id  Bloop-comp (λ y → hLevelLift {n = 2} 1 (Bsquash y) ) x
+  where
+  -- TODO: prove transp≃PathP so I don't have to use J explicitly
+    lemma : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → {b0 : B i0} {b1 : B i1} → PathP (λ i → B i) b0 b1
+    lemma hB = toPathP (hB _ _ _)
+
+    Bloop-id : PathP (λ i → PathP (λ j → B (loop-id i j)) Bbase Bbase)
+               (Bloop (G .groupStruc .id)) refl
+    Bloop-id = (lemma λ i → J (λ b p → ∀ bb → isProp (PathP (λ j → B (p j)) Bbase bb)) (Bsquash _ _) (loop-id i) Bbase)
+
+    Bloop-comp : (g h : G .type) →
+      PathP (λ i → PathP (λ j → B (loop-comp g h i j)) Bbase (Bloop h i))
+      (Bloop g) (Bloop (G .groupStruc .comp g h))
+    Bloop-comp g h = lemma (λ i → J (λ b p → ∀ bb → isProp (PathP (λ j → B (p j)) Bbase bb)) (Bsquash _ _) (loop-comp g h i) (Bloop h i))
 
 -- lemma 8.9.1 in hott book
 code-loop : {A : Set ℓ} {a0 : A}
@@ -64,79 +85,142 @@ code-loop {A = A} {a0} {code} c0 decode encode-decode decode-encode' = E.isoToEq
        refl ∎
       ) p
 
-some-result : G.Iso ((π^ 0) (EMSpace1Pointed G)) G
-some-result {ℓ} {G = group G Gset (isGroup.group-struct id inv _⊙_ lUnit rUnit assoc lCancel rCancel)} = G.compIso {!!} {!!}
+some-result : ((π^ 0) (EMSpace1Pointed G)) ≡ G
+some-result {ℓ} {G = G} = p0 ∙ (sym p1)
   where
-
-  G_ : Group {ℓ}
-  G_ = group G Gset (isGroup.group-struct id inv _⊙_ lUnit rUnit assoc lCancel rCancel)
-
-  e' = code-loop {code = λ x → codes x .fst } id decode (λ c → (transportRefl (c ⊙ id)) ∙ (rUnit c)) loop-id
+  
+  e' : (Ω-group 0 (EMSpace1Pointed G) squash) .type ≃ G .type
+  e' = code-loop {code = λ x → codes x .fst } (G .groupStruc .id) decode encode-decode loop-id
     where
+    module Codes where
+      record Struc {ℓ'} (A : Type ℓ') (a-id : A) (a-comp : A → A → A) : Type (ℓ-max ℓ ℓ') where
+        constructor struc
+        field
+          f : G .type → A
+          f-id : f (G .groupStruc .id) ≡ a-id
+          f-comp : (g0 g1 : G .type) → f (G .groupStruc .comp g0 g1) ≡ a-comp (f g0) (f g1)
 
-    codes : EMSpace1 G_ → HLevel 2
-    codes = ind (G , Gset) Gloop {!Gloop-id!} {!!} (λ _ → hLevelHLevelSuc 1)
+      struc0 : Struc (G .type ≡ G .type) refl _∙_
+      struc0 = struc f f-id f-comp
+        where
+          f' : G .type → G .type ≃ G .type
+          f' g = helper G g
+            where
+            helper : ∀ {ℓ} (G : Group {ℓ}) → G .type → G .type ≃ G .type
+            helper (group G Gset (group-struct id inv comp lUnit rUnit assoc lCancel rCancel)) g =
+                   E.isoToEquiv (I.iso pos neg pos-neg neg-pos)
+              where
+              pos : G → G
+              pos g' = comp g' g
+
+              neg : G → G
+              neg g' = comp g' (inv g)
+
+              pos-neg : ∀ g' → pos (neg g') ≡ g'
+              pos-neg g' = comp (comp g' (inv g)) g ≡⟨ assoc _ _ _ ⟩
+                           comp g' (comp (inv g) g) ≡⟨ cong (comp g') (lCancel _) ⟩
+                           comp g' id ≡⟨ rUnit _ ⟩
+                           g' ∎
+
+              neg-pos : ∀ g' → neg (pos g') ≡ g'
+              neg-pos g' = comp (comp g' g) (inv g) ≡⟨ assoc _ _ _ ⟩
+                           comp g' (comp g (inv g)) ≡⟨ cong (comp g') (rCancel _) ⟩
+                           comp g' id ≡⟨ rUnit _ ⟩
+                           g' ∎
+
+          f : G .type → G .type ≡ G .type
+          f g = ua (f' g)
+
+          f-id : f (G .groupStruc .id) ≡ refl
+          f-id = subst (λ x → ua x ≡ refl) (sym helper) uaIdEquiv
+            where
+            helper : f' (G .groupStruc .id) ≡ E.idEquiv _
+            helper = E.equivEq _ _ (funExt (λ g → G .groupStruc .rUnit _))
+
+          f-comp : (g0 g1 : G .type) →
+                   f  (G .groupStruc .comp g0 g1) ≡ f g0 ∙ f g1
+          f-comp g0 g1 = subst (λ x → ua x ≡ f g0 ∙ f g1) (sym helper) (uaCompEquiv _ _)
+            where
+            helper : f' (G .groupStruc .comp g0 g1) ≡ E.compEquiv (f' g0) (f' g1)
+            helper = E.equivEq _ _ (funExt (λ g → sym (G .groupStruc .assoc _ _ _)))
+
+      G' : Σ (Type ℓ) isSet
+      G' = G .type , G .setStruc
+
+      struc1 : Struc (G' ≡ G') refl _∙_
+      struc1 = transport (sym (cong F q)) struc0
+        where
+          X : ∀ {ℓ} → Type (ℓ-suc ℓ)
+          X {ℓ = ℓ} = Σ[ A ∈ Type ℓ ] (Σ A (λ _ → A → A → A))
+
+          F : ∀ {ℓ} → X {ℓ} → Type _
+          F (A , (B , C))= Struc A B C
+
+          x0 : X
+          x0 = ((G .type ≡ G .type) , (refl , _∙_))
+
+          x1 : X
+          x1 = ((G' ≡ G')  , (refl , _∙_))
+
+          q : x1 ≡ x0
+          q i = (p i) , ((p-id i) , (p-comp i))
+            where
+              p : (G' ≡ G') ≡ (G .type ≡ G .type)
+              p = ua (E.invEquiv (HLevel≃ {n = 2} {A = G .type} {B = G .type} {hA = G .setStruc} {hB = G .setStruc}))
+
+              p-id : PathP (λ i → p i) refl refl
+              p-id i = glue (λ { (i = i0) → refl ; (i = i1) → refl }) refl
+
+              p-comp : PathP (λ i → p i → p i → p i) _∙_ _∙_
+              p-comp i g0 g1 = glue (λ { (i = i0) → g0 ∙ g1 ; (i = i1) → g0 ∙ g1 })
+                                    ((unglue (i ∨ ~ i) g0) ∙ (unglue (i ∨ ~ i) g1))
+
+      Gloop = Struc.f struc1
+      Gloop-id = Struc.f-id struc1
+
+      Gloop-comp : (g h : G .type) → PathP (λ i → (G .type , G .setStruc) ≡ Gloop h i) (Gloop g) (Gloop (G .groupStruc .comp g h))
+      Gloop-comp g h i j =  hcomp (λ k → λ { (i = i0) → Gloop g j
+                                             ; (i = i1) → (Struc.f-comp struc1) g h (~ k) j
+                                             ; (j = i0) → (G .type , G .setStruc)
+                                             ; (j = i1) → Gloop h i
+                                             }) (compPath-filler (Gloop g) (Gloop h) i j)
+
+      codes : EMSpace1 G → HLevel 2
+      codes = ind (G .type , G .setStruc) Gloop Gloop-id Gloop-comp (λ _ → hLevelHLevelSuc 1)
+
+    codes = Codes.codes
+
+    decode : {a : EMSpace1 G} → codes a .fst → base ≡ a
+    decode {a = a} = ind' {B = λ a → codes a .fst → base ≡ a } loop loop-loop (λ x → hLevelPi 2 (λ _ → squash _ _)) a
       where
-        Gloop' : G → G ≃ G
-        Gloop' g = (E.isoToEquiv (I.iso (_⊙_ g) (_⊙_ (inv g)) rightInv leftInv))
-          where
-            rightInv : (b : G) → g ⊙ ((inv g) ⊙ b) ≡ b
-            rightInv b = g ⊙ (inv g ⊙ b) ≡⟨ sym (assoc _ _ _) ⟩
-                          (g ⊙ inv g) ⊙ b ≡⟨ cong (λ x → x ⊙ b) (rCancel _) ⟩
-                          id ⊙ b ≡⟨ lUnit _ ⟩
-                          b ∎
+      loop-loop : (g : G .type) →
+        PathP (λ i → codes (loop {G = G} g i) .fst → base {G = G} ≡ loop g i) loop loop
+      loop-loop g i x j = hcomp (λ k → λ { (i = i0) → loop-comp x g (~ k) j
+                                          ; (i = i1) → loop x j
+                                          ; (j = i0) → base
+                                          ; (j = i1) → loop g (i ∨ ~ k) })
+                          (unglue (i ∨ ~ i) (transport helper' (unglue (i ∨ ~ i) x)))
+                where
+                helper' : transport refl (unglue {A = G .type ≡ G .type} i1 (Codes.Struc.f Codes.struc0 (transport refl g)) i) ≡
+                          unglue {A = G .type ≡ G .type} (i1) (Codes.Struc.f Codes.struc0 g) i
+                helper' = transport refl (unglue i1 (Codes.Struc.f Codes.struc0 (transport refl g)) i)
+                          ≡⟨ transportRefl _  ⟩
+                          unglue i1 (Codes.Struc.f Codes.struc0 (transport refl g)) i ≡⟨ cong (λ x → (unglue i1 (Codes.Struc.f Codes.struc0 x) i)) (transportRefl _ ) ⟩
+                          unglue i1 (Codes.Struc.f Codes.struc0 g) i ∎
 
-            leftInv : (a : G) → (inv g ⊙ (g ⊙ a)) ≡ a
-            leftInv a = inv g ⊙ (g ⊙ a) ≡⟨ sym (assoc _ _ _) ⟩
-                         (inv g ⊙ g) ⊙ a ≡⟨ cong (λ x → x ⊙ a) (lCancel _) ⟩ id ⊙ a ≡⟨ lUnit _ ⟩
-                         a ∎
+    encode-decode : (c : codes (snd (iterate 0 Ω (EMSpace1Pointed G))) .fst) →
+                  transport (cong (λ x → codes x .fst) (decode c))
+                  (G .groupStruc .id)
+                  ≡ c
+    encode-decode c = transportRefl (G .groupStruc .comp (G .groupStruc .id) c) ∙ G .groupStruc .lUnit c
 
-        Gloop'-id : Gloop' id ≡ E.idEquiv G
-        Gloop'-id = E.equivEq (Gloop' id) (E.idEquiv G) (funExt (λ x → lUnit x))
+  p0 : (π^ 0 (EMSpace1Pointed G)) ≡ Ω-group 0 (EMSpace1Pointed G) squash
+  p0 = π^≡Ω-group {k = 0} (EMSpace1Pointed G) squash
 
-        eq : ((G , Gset)  ≡ (G , Gset)) ≡ (G ≡ G)
-        eq = ua (E.invEquiv (HLevel≃ {n = 2} {A = G} {B = G} {hA = Gset} {hB = Gset}))
-
-        Gloop : G → (G , Gset) ≡ (G , Gset)
-        Gloop g = (HLevel≃ {n = 2}) .fst (ua (Gloop' g))
-
-        Gloop-id : Gloop id ≡ refl {x = (G , Gset)}
-        Gloop-id = {!!}
-
-        -- E.invEq (HAE.congEquiv (E.invEquiv (HLevel≃ {n = 2}))) {!!}
-        -- (subst (λ e → ua e ≡ refl) (sym Gloop'-id) uaIdEquiv)
-
-        Gloop'-comp : (g h : G) → Gloop' (h ⊙ g) ≡ E.compEquiv (Gloop' g) (Gloop' h)
-        Gloop'-comp g h = E.equivEq _ _ (funExt (λ x → assoc _ _ _))
-
-        Gloop-comp : (g h : G) → Gloop (h ⊙ g) ≡ Gloop g ∙ Gloop h
-        Gloop-comp g h = E.invEq (HAE.congEquiv (E.invEquiv (HLevel≃ {n = 2})))
-                         (ua (Gloop' (h ⊙ g)) ≡⟨ cong ua (Gloop'-comp _ _) ⟩
-                          ua (E.compEquiv (Gloop' g) (Gloop' h)) ≡⟨ uaCompEquiv _ _ ⟩
-                          (ua (Gloop' g)) ∙ (ua (Gloop' h)) ∎ )
-
-        Gloop-comp' : (g h : G) → PathP (λ i → (G , Gset) ≡ Gloop h i) (Gloop g) (Gloop (h ⊙ g))
-        Gloop-comp' g h i j =  hcomp (λ k → λ { (i = i0) → Gloop g j
-                                               ; (i = i1) → Gloop-comp g h (~ k) j
-                                               ; (j = i0) → (G , Gset)
-                                               ; (j = i1) → Gloop h i
-                                               }) (compPath-filler (Gloop g) (Gloop h) i j)
-
-    decode : {a : EMSpace1 G_} → codes a .fst → base ≡ a
-    decode {a = a} = {!!}
-      where
-        loop-loop : (g : G) →
-          PathP (λ i → codes (loop g i) .fst → base ≡ loop g i) loop loop
-        loop-loop g = {!!}
-
-  p : (∥ base ≡ base ∥ 2) ≡ (base ≡ base)
-  p = ua (idemTrunc (squash _ _))
-
-  G' : Group
-  G' = G.transportGroup (π^ 0 (EMSpace1Pointed G_)) p
-
-  EM≃G' : G.Iso ((π^ 0) (EMSpace1Pointed G_)) G'
-  EM≃G' = G.transportIso p
-
-  -- G'≃G : G.Iso G' G_
-  -- G'≃G = ?
+  p1 : G ≡ Ω-group 0 (EMSpace1Pointed G) squash
+  p1 = G.ua (E.invEquiv e' , λ g0 g1 i j → hcomp
+                                             (λ k → λ { (i = i0) → loop-comp g0 g1 k j
+                                                      ; (i = i1) → compPath-filler (loop g0) (loop g1) k j
+                                                      ; (j = i0) → base
+                                                      ; (j = i1) → loop g1 k })
+                                             (loop g0 j))

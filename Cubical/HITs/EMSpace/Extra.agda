@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical --safe #-}
+{-# OPTIONS --cubical #-}
 module Cubical.HITs.EMSpace.Extra where
 
 open import Cubical.Data.Nat
@@ -60,11 +60,6 @@ corollary-7-3-14 = {!!}
 pathToIso : ∀ {ℓ} {A B : Type ℓ} → A ≡ B → (I.Iso A B)
 pathToIso p = I.iso (transport p) (transport⁻ p) (transportTransport⁻ p) (transport⁻Transport p)
 
-π^≃Ω-group : ∀ {ℓ k} (A :  Pointed {ℓ}) → G.Iso' (π^ k A) (Ω-group k (∥ A ∥' (3 + k)) (isOfHLevel∥∥ {n = 2 + k}))
-π^≃Ω-group {k = k} A = G.iso' (pathToIso (cong fst (corollary-7-3-14 {k = 1 + k} {n = 1}))) {!!}
-
-π^≡Ω-group : ∀ {ℓ k} (A :  Pointed {ℓ}) → π^ k A ≡ Ω-group k (∥ A ∥' (3 + k)) (isOfHLevel∥∥ {n = 2 + k})
-π^≡Ω-group A = {!!}
 
 
 π'^-suc : ∀ {ℓ k} {A : Pointed {ℓ}} → (π'^ (suc k) A) ≡ (π'^ k (Ω A))
@@ -84,8 +79,6 @@ pathToIso p = I.iso (transport p) (transport⁻ p) (transportTransport⁻ p) (tr
 
     helper : G.isMorph (π^ (suc k) A) (π^ k (Ω A)) (f .fst)
     helper = λ g0 g1 → {!!}
-
-
 
 stable : {n k : ℕ} {Sk≤2n : suc k ≤ n * 2} {A : Pointed {ℓ}} (Ac : isConnected n (A .fst) ) → (π^ (suc k ) (Susp' A)) ≡ (π^ k (A))
 stable {n = n} {k = k} {A = A} Ac =

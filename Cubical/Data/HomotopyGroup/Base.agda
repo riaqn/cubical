@@ -1,13 +1,13 @@
-{-# OPTIONS --cubical --safe #-}
+{-# OPTIONS --cubical --allow-unsolved-metas #-}
 module Cubical.Data.HomotopyGroup.Base where
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Data.Nat
 open import Cubical.HITs.Truncation
 open import Cubical.Foundations.HLevels
-open import Cubical.Data.Group.Base
+open import Cubical.Data.Group 
 open import Cubical.Data.Sigma
-open import Cubical.Data.Pointed
+open import Cubical.Data.Pointed hiding (_≃_)
 import Cubical.Foundations.GroupoidLaws as GL
 import Cubical.Foundations.Isomorphism as I
 import Cubical.Foundations.Equiv as E
@@ -124,3 +124,9 @@ hLevelΩ^ {k = suc k} {n = n} A hA = hLevelΩ {n = 1 + n} A' (hLevelΩ^ {k = k} 
 ∥_∥'_ : (A : Pointed {ℓ}) (n : ℕ) → Pointed {ℓ}
 ∥ A ∥' n = (∥ A .fst ∥ n , ∣ A .snd ∣)
 
+π^≡Ω-group : ∀ {ℓ k} (A :  Pointed {ℓ}) → (hA : isOfHLevel (3 + k) (A .fst)) → π^ k A ≡ Ω-group k A hA
+π^≡Ω-group = {!!}
+
+
+π^≡Ω-group∥ : ∀ {ℓ k} (A :  Pointed {ℓ}) → π^ k A ≡ Ω-group k (∥ A ∥' (3 + k)) (isOfHLevel∥∥ {n = 2 + k})
+π^≡Ω-group∥ A = {!!}

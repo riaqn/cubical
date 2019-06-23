@@ -81,12 +81,12 @@ morph-inv : (f : morph G H) → (g : G .type) → f .fst (G .groupStruc .inv g) 
 morph-inv {G = G} {H = H} (f , fmorph) g = unique-inv {G = H} (f g) (morph-inv' {G = G} {H = H} {f = f , fmorph} g)  (H .groupStruc .rCancel _ , H .groupStruc .lCancel _)
 
 ua : ∀ {ℓ} {G H : Group {ℓ}} → G ≃ H  → G ≡ H
-ua {G = group G Gset Ggroup} {H = group H Hset Hgroup} ((f , fmorph) , fequiv) i = group (p i) (p-set i) (p-group i)
+ua {G = group G Gset Ggroup} {H = group H Hset Hgroup} ((f , fequiv) , fmorph) i = group (p i) (p-set i) (p-group i)
   where
-    G_ : Group 
+    G_ : Group
     G_ = group G Gset Ggroup
 
-    H_ : Group 
+    H_ : Group
     H_ = group H Hset Hgroup
 
     p : G ≡ H
@@ -96,16 +96,41 @@ ua {G = group G Gset Ggroup} {H = group H Hset Hgroup} ((f , fmorph) , fequiv) i
     p-set = isProp→PathP {B = isSet} (λ x → H.isPropIsOfHLevel 2 x) p Gset Hset
 
     p-group : PathP (λ i → isGroup (p i)) Ggroup Hgroup
-    p-group i = group-struct ( p-id i) {!!} {!!} {!!} {!!} {!!} {!!} {!!}
+    p-group i = group-struct ( p-id i) (p-inv i) (p-comp i) (p-lUnit i) (p-rUnit i) (p-assoc i) (p-lCancel i) (p-rCancel i)
       where
-      q : G ≡ p i
-      q j = p (i ∧ j)
-
       p-id : PathP (λ i → p i) (Ggroup .id) (Hgroup .id)
       p-id i = G.glue (λ  { (i = i0) → Ggroup .id
                           ; (i = i1) → Hgroup .id }) (morph-id {G = G_} {H = H_} (f , fmorph) i)
 
       p-inv : PathP (λ i →  p i → p i) (Ggroup .inv) (Hgroup .inv)
       p-inv i g = G.glue (λ { (i = i0) → Ggroup .inv g
-                             ; (i = i1) → Hgroup .inv g}) {!morph-inv (f , fmorph) (G.unglue (~ i ∨ i) g) i!}
+                            ; (i = i1) → Hgroup .inv g})
+                         (hcomp (λ j → λ { (i = i0) → morph-inv {G = G_} {H = H_} (f , fmorph) g (~ j)
+                                         ; (i = i1) → Hgroup .inv g })
+                                (Hgroup .inv (G.unglue (i ∨ ~ i) g)))
 
+      p-comp : PathP (λ i → p i → p i → p i) (Ggroup .comp) (Hgroup .comp)
+      p-comp i g0 g1 = G.glue (λ { (i = i0) → Ggroup .comp g0 g1
+                                  ; (i = i1) → Hgroup .comp g0 g1 })
+                               (hcomp
+                                  (λ j → λ { (i = i0) → fmorph g0 g1 (~ j)
+                                           ; (i = i1) → Hgroup .comp g0 g1 })
+                                  (Hgroup .comp (G.unglue (i ∨ ~ i) g0) (G.unglue (i ∨ ~ i) g1)))
+
+      lemma : ∀ {ℓ} {B : I → Type ℓ} → ((i : I) → isProp (B i)) → {b0 : B i0} {b1 : B i1} → PathP (λ i → B i) b0 b1
+      lemma hB = toPathP (hB _ _ _)
+
+      p-lUnit : PathP (λ i → ∀ a → p-comp i (p-id i) a ≡ a) (Ggroup .lUnit) (Hgroup .lUnit)
+      p-lUnit = lemma (λ i → H.hLevelPi 1 (λ a → p-set i _ _))
+
+      p-rUnit : PathP (λ i → ∀ a → p-comp i a (p-id i) ≡ a) (Ggroup .rUnit) (Hgroup .rUnit)
+      p-rUnit = lemma (λ i → H.hLevelPi 1 (λ a → p-set i _ _))
+
+      p-assoc : PathP (λ i → ∀ a b c → p-comp i (p-comp i a b) c  ≡ p-comp i a (p-comp i b c)) (Ggroup .assoc) (Hgroup .assoc)
+      p-assoc = lemma (λ i →  H.hLevelPi 1 λ _ → H.hLevelPi 1 (λ _ → H.hLevelPi 1 (λ _ → p-set i _ _)))
+
+      p-lCancel : PathP (λ i → ∀ a → p-comp i (p-inv i a) a ≡ p-id i) (Ggroup .lCancel) (Hgroup .lCancel)
+      p-lCancel = lemma (λ i → H.hLevelPi 1 (λ a → p-set i _ _))
+
+      p-rCancel : PathP (λ i → ∀ a → p-comp i a (p-inv i a) ≡ p-id i) (Ggroup .rCancel) (Hgroup .rCancel)
+      p-rCancel = lemma (λ i → H.hLevelPi 1 (λ a → p-set i _ _))
