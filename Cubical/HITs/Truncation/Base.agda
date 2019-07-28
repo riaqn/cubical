@@ -11,10 +11,3 @@ data  ∥_∥_ {ℓ} (A : Type ℓ) (n : ℕ) : Type ℓ where
   ∣_∣ : A  → ∥ A ∥ n
   top : (f : S n → ∥ A ∥ n) → ∥ A ∥ n
   rays : (f : S n → ∥ A ∥ n) (x : S n) → top f ≡ f x
-
--- data ⊤ {ℓ} : Type ℓ where
---   unit : ⊤
-
--- ∥_∥_ : ∀ {ℓ} → (A : Type ℓ) (n : ℕ) → Type ℓ
--- ∥ A ∥ 0 = ⊤
--- ∥ A ∥ (suc n) = ∥ A ∥' (suc n)

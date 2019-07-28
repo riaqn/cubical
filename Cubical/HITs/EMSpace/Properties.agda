@@ -1,13 +1,13 @@
-{-# OPTIONS --cubical #-}
+{-# OPTIONS --cubical --safe #-}
 module Cubical.HITs.EMSpace.Properties where
 
 open import Cubical.HITs.EMSpace.Base
-open import Cubical.Data.HomotopyGroup
+open import Cubical.Data.HomotopyGroup.Base
 open import Cubical.Foundations.Prelude hiding (comp)
 open import Cubical.Data.Group as G using (Group; isGroup; group; group-struct) 
 open import Cubical.Foundations.HLevels
 open import Cubical.Core.Glue
-open import Cubical.Foundations.Univalence using (ua; uaIdEquiv; uaCompEquiv)
+import Cubical.Foundations.Univalence as U
 open import Cubical.Foundations.Transport
 open import Cubical.HITs.Truncation renaming (ind to tind)
 open import Cubical.Data.Sigma hiding (comp)
@@ -72,8 +72,8 @@ code-loop : {A : Set ℓ} {a0 : A}
             (decode : {a : A} → code a → a0 ≡ a) → 
             ((c : code a0) → transport (cong code (decode c)) c0 ≡ c) → 
             (decode c0 ≡ refl) → 
-            (a0 ≡ a0) ≃ code a0
-code-loop {A = A} {a0} {code} c0 decode encode-decode decode-encode' = E.isoToEquiv (I.iso encode decode encode-decode decode-encode)
+            code a0 ≃ (a0 ≡ a0)
+code-loop {A = A} {a0} {code} c0 decode encode-decode decode-encode' = E.isoToEquiv (I.iso decode encode decode-encode encode-decode)
   where
     encode : {a : A} → (a0 ≡ a) → code a
     encode p = transport (cong code p) c0
@@ -88,12 +88,12 @@ code-loop {A = A} {a0} {code} c0 decode encode-decode decode-encode' = E.isoToEq
 some-result : ((π^ 0) (EMSpace1Pointed G)) ≡ G
 some-result {ℓ} {G = G} = p0 ∙ (sym p1)
   where
-  
-  e' : (Ω-group 0 (EMSpace1Pointed G) squash) .type ≃ G .type
+  e' : G .type ≃ (Ω^-group 0 (EMSpace1Pointed G) squash) .type
   e' = code-loop {code = λ x → codes x .fst } (G .groupStruc .id) decode encode-decode loop-id
     where
     module Codes where
       record Struc {ℓ'} (A : Type ℓ') (a-id : A) (a-comp : A → A → A) : Type (ℓ-max ℓ ℓ') where
+        coinductive
         constructor struc
         field
           f : G .type → A
@@ -128,18 +128,19 @@ some-result {ℓ} {G = G} = p0 ∙ (sym p1)
                            comp g' id ≡⟨ rUnit _ ⟩
                            g' ∎
 
+
           f : G .type → G .type ≡ G .type
-          f g = ua (f' g)
+          f g = U.ua (f' g)
 
           f-id : f (G .groupStruc .id) ≡ refl
-          f-id = subst (λ x → ua x ≡ refl) (sym helper) uaIdEquiv
+          f-id = subst (λ x → U.ua x ≡ refl) (sym helper) U.uaIdEquiv
             where
             helper : f' (G .groupStruc .id) ≡ E.idEquiv _
             helper = E.equivEq _ _ (funExt (λ g → G .groupStruc .rUnit _))
 
           f-comp : (g0 g1 : G .type) →
                    f  (G .groupStruc .comp g0 g1) ≡ f g0 ∙ f g1
-          f-comp g0 g1 = subst (λ x → ua x ≡ f g0 ∙ f g1) (sym helper) (uaCompEquiv _ _)
+          f-comp g0 g1 = subst (λ x → U.ua x ≡ f g0 ∙ f g1) (sym helper) (U.uaCompEquiv _ _)
             where
             helper : f' (G .groupStruc .comp g0 g1) ≡ E.compEquiv (f' g0) (f' g1)
             helper = E.equivEq _ _ (funExt (λ g → sym (G .groupStruc .assoc _ _ _)))
@@ -147,26 +148,17 @@ some-result {ℓ} {G = G} = p0 ∙ (sym p1)
       G' : Σ (Type ℓ) isSet
       G' = G .type , G .setStruc
 
+      e : (G .type ≡ G .type) ≃ (G' ≡ G')
+      e = (HLevel≃ {n = 2} {A = G .type} {B = G .type} {hA = G .setStruc} {hB = G .setStruc})
+
       struc1 : Struc (G' ≡ G') refl _∙_
-      struc1 = transport (sym (cong F q)) struc0
+      struc1 = transport (sym q) struc0
         where
-          X : ∀ {ℓ} → Type (ℓ-suc ℓ)
-          X {ℓ = ℓ} = Σ[ A ∈ Type ℓ ] (Σ A (λ _ → A → A → A))
-
-          F : ∀ {ℓ} → X {ℓ} → Type _
-          F (A , (B , C))= Struc A B C
-
-          x0 : X
-          x0 = ((G .type ≡ G .type) , (refl , _∙_))
-
-          x1 : X
-          x1 = ((G' ≡ G')  , (refl , _∙_))
-
-          q : x1 ≡ x0
-          q i = (p i) , ((p-id i) , (p-comp i))
+          q : Struc (G' ≡ G') refl _∙_ ≡ Struc (G .type ≡ G .type) refl _∙_ 
+          q i = Struc (p i) (p-id i) (p-comp i)
             where
               p : (G' ≡ G') ≡ (G .type ≡ G .type)
-              p = ua (E.invEquiv (HLevel≃ {n = 2} {A = G .type} {B = G .type} {hA = G .setStruc} {hB = G .setStruc}))
+              p = U.ua (E.invEquiv e)
 
               p-id : PathP (λ i → p i) refl refl
               p-id i = glue (λ { (i = i0) → refl ; (i = i1) → refl }) refl
@@ -189,6 +181,7 @@ some-result {ℓ} {G = G} = p0 ∙ (sym p1)
       codes = ind (G .type , G .setStruc) Gloop Gloop-id Gloop-comp (λ _ → hLevelHLevelSuc 1)
 
     codes = Codes.codes
+    
 
     decode : {a : EMSpace1 G} → codes a .fst → base ≡ a
     decode {a = a} = ind' {B = λ a → codes a .fst → base ≡ a } loop loop-loop (λ x → hLevelPi 2 (λ _ → squash _ _)) a
@@ -199,28 +192,31 @@ some-result {ℓ} {G = G} = p0 ∙ (sym p1)
                                           ; (i = i1) → loop x j
                                           ; (j = i0) → base
                                           ; (j = i1) → loop g (i ∨ ~ k) })
-                          (unglue (i ∨ ~ i) (transport helper' (unglue (i ∨ ~ i) x)))
-                where
-                helper' : transport refl (unglue {A = G .type ≡ G .type} i1 (Codes.Struc.f Codes.struc0 (transport refl g)) i) ≡
-                          unglue {A = G .type ≡ G .type} (i1) (Codes.Struc.f Codes.struc0 g) i
-                helper' = transport refl (unglue i1 (Codes.Struc.f Codes.struc0 (transport refl g)) i)
-                          ≡⟨ transportRefl _  ⟩
-                          unglue i1 (Codes.Struc.f Codes.struc0 (transport refl g)) i ≡⟨ cong (λ x → (unglue i1 (Codes.Struc.f Codes.struc0 x) i)) (transportRefl _ ) ⟩
-                          unglue i1 (Codes.Struc.f Codes.struc0 g) i ∎
+                                (loop helper j)
+                          where
+                          helper = hcomp (λ j → λ { (i = i0) → G .groupStruc .comp (transportRefl x j) (transportRefl g j)
+                                                  ; (i = i1) → transportRefl x j
+                                                  }) (unglue (i ∨ ~ i) (unglue (i ∨ ~ i) x))
 
     encode-decode : (c : codes (snd (iterate 0 Ω (EMSpace1Pointed G))) .fst) →
-                  transport (cong (λ x → codes x .fst) (decode c))
+                  transport (cong (λ x → codes x .fst) (decode {a = base} c))
                   (G .groupStruc .id)
                   ≡ c
-    encode-decode c = transportRefl (G .groupStruc .comp (G .groupStruc .id) c) ∙ G .groupStruc .lUnit c
+    encode-decode c =
+      transport refl (transport refl (G .groupStruc .comp (transport refl (G .groupStruc .id)) (transport refl c))) ≡⟨ transportRefl _  ⟩
+      transport refl (G .groupStruc .comp (transport refl (G .groupStruc .id)) (transport refl c)) ≡⟨ transportRefl _  ⟩
+      G .groupStruc .comp (transport refl (G .groupStruc .id)) (transport refl c) ≡⟨ cong (λ x → G .groupStruc .comp x (transport refl c)) (transportRefl _) ⟩
+      G .groupStruc .comp (G .groupStruc .id) (transport refl c) ≡⟨ cong (G .groupStruc .comp (G .groupStruc .id)) (transportRefl _) ⟩
+      G .groupStruc .comp (G .groupStruc .id) c ≡⟨ G .groupStruc .lUnit c ⟩
+      c ∎
 
-  p0 : (π^ 0 (EMSpace1Pointed G)) ≡ Ω-group 0 (EMSpace1Pointed G) squash
-  p0 = π^≡Ω-group {k = 0} (EMSpace1Pointed G) squash
+  p0 : (π^ 0 (EMSpace1Pointed G)) ≡ Ω^-group 0 (EMSpace1Pointed G) squash
+  p0 = π^≡Ω^-group {k = 0} (EMSpace1Pointed G) squash
 
-  p1 : G ≡ Ω-group 0 (EMSpace1Pointed G) squash
-  p1 = G.ua (E.invEquiv e' , λ g0 g1 i j → hcomp
+  p1 : G ≡ Ω^-group 0 (EMSpace1Pointed G) squash
+  p1 = G.ua (e' , λ g0 g1 i j → hcomp
                                              (λ k → λ { (i = i0) → loop-comp g0 g1 k j
                                                       ; (i = i1) → compPath-filler (loop g0) (loop g1) k j
                                                       ; (j = i0) → base
                                                       ; (j = i1) → loop g1 k })
-                                             (loop g0 j))
+                                             (loop g0 j) )

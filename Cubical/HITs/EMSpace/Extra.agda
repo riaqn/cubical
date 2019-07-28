@@ -57,36 +57,31 @@ freudenthal-equivalence = {!!}
 corollary-7-3-14 : (∥ Ω^ k A ∥' (1 + n)) ≡ Ω^ k (∥ A ∥' (1 + n + k))
 corollary-7-3-14 = {!!}
 
-pathToIso : ∀ {ℓ} {A B : Type ℓ} → A ≡ B → (I.Iso A B)
-pathToIso p = I.iso (transport p) (transport⁻ p) (transportTransport⁻ p) (transport⁻Transport p)
+π^-suc : ∀ {ℓ} (k : ℕ) (A : Pointed {ℓ}) → π^ (suc k) A ≡ π^ k (Ω A)
 
 
-
-π'^-suc : ∀ {ℓ k} {A : Pointed {ℓ}} → (π'^ (suc k) A) ≡ (π'^ k (Ω A))
-π'^-suc = {!!}
-
-Ω-≃ : ∀ {ℓ ℓ'} {A : Pointed {ℓ}} {B : Pointed {ℓ'}} → (A P.≃ B) → (Ω A) P.≃ (Ω B)
-Ω-≃ f = {!!} , {!!}
-
-Ω^-suc : ∀ {ℓ k} {A : Pointed {ℓ}} → (Ω^ (suc k) A) P.≃ Ω^ k (Ω A)
-Ω^-suc {k = 0} = ?
-Ω^-suc {k = suc k} {A = A} = Ω-≃ (Ω^-suc {k = k} {A = A})
-
-π^-suc : ∀ {ℓ k} {A : Pointed {ℓ}} → (π^ (suc k) A) G.≃ (π^ k (Ω A))
-π^-suc {k = k} {A = A} = f , helper
-  where
-    f = (U.pathToEquiv (cong (λ x → ∥ x .fst ∥ 2) (Ω^-suc {k = 1 + k})))
-
-    helper : G.isMorph (π^ (suc k) A) (π^ k (Ω A)) (f .fst)
-    helper = λ g0 g1 → {!!}
-
-stable : {n k : ℕ} {Sk≤2n : suc k ≤ n * 2} {A : Pointed {ℓ}} (Ac : isConnected n (A .fst) ) → (π^ (suc k ) (Susp' A)) ≡ (π^ k (A))
+stable : {n k : ℕ} {A : Pointed {ℓ}} (Ac : isConnected n (A .fst) ) → (π^ (2 + (k + k) ) (Susp' A)) ≡ (π^ (1 + (k + k )) A)
 stable {n = n} {k = k} {A = A} Ac =
-  π^ (suc k) (Susp' A) ≡⟨  {!!} ⟩
-  π^ k (Ω (Susp' A)) ≡⟨  {!!} ⟩
-  Ω-group k (∥ Ω (Susp' A) ∥' (3 + k)) (isOfHLevel∥∥ {n = 2 + k}) ≡⟨ {!cong (Ω-group k)!} ⟩
-  Ω-group k (∥ A ∥' (3 + k)) (isOfHLevel∥∥ {n = 2 + k}) ≡⟨ {!!} ⟩
-  π^ k A ∎
+  π^ (suc (suc (k + k))) (Susp' A) ≡⟨  {!π^-suc (suc (k + k)) (Susp' A)!} ⟩
+  π^ (suc (k + k)) (Ω (Susp' A)) ≡⟨ π^≡Ω-group∥ {k = suc (k + k)} (Ω (Susp' A)) ⟩
+  Ω-group (suc  (k + k)) (∥ Ω (Susp' A) ∥' (3 + (suc (k + k)))) (isOfHLevel∥∥ {n = (2 + suc (k + k))}) ≡⟨ {!cong (Ω-group k)!} ⟩
+  Ω-group (suc (k + k)) (∥ A ∥' (4 + (k + k))) (isOfHLevel∥∥ {n = 3 + (k + k)}) ≡⟨ sym (π^≡Ω-group∥ {k = suc (k + k)} A) ⟩
+  π^ (suc (k + k)) A ∎
+    -- where
+    -- X : ∀ {ℓ} (k : ℕ) → Type (ℓ-suc ℓ)
+    -- X {ℓ} k = Σ[ A ∈ Pointed {ℓ}] (isOfHLevel (3 + k) (A .fst))
+
+    -- Ω-group' : ∀ {ℓ} (k : ℕ) → X {ℓ} k → Group {ℓ}
+    -- Ω-group' {ℓ} k x = Ω-group k (x .fst) (x .snd)
+
+    -- x0 : X k
+    -- x0 = (∥ Ω (Susp' A) ∥' (3 + k) , isOfHLevel∥∥ {n = 2 + k})
+
+    -- x1 : X k
+    -- x1 = (∥ A ∥' (3 + k) , isOfHLevel∥∥ {n = 2 + k})
+
+    -- p : x0 ≡ x1
+    -- p i = {!freudenthal-equivalence!} , {!!}
 
 -- lemma-5-3 : {n k : ℕ} {A : Pointed {ℓ}} (Ac : isConnected n (A .fst) ) → (π^ (2 + k + k ) (Susp'^ (suc n) A)) ≡ (π^ (1 + k + k) (Susp'^ n A))
 -- lemma-5-3  {n = n} {k} {A} Ac = π^ (2 + k + k) ((Susp'^ (suc n) A)) ≡⟨ {!!} ⟩
@@ -114,9 +109,7 @@ stable {n = n} {k = k} {A = A} Ac =
 K' : ℕ → Pointed {ℓ} → Pointed
 K' n A = ∥ Susp'^ n A ∥' (3 + n)
 
-theorem-5-4 : {n : ℕ} {A : Pointed {ℓ}} {Ac : isConnected 2 (A .fst)} {hA : isOfHLevel 3 (A .fst)} → G.Iso (π'^ n (K' n A)) (π'^ zero A)
-theorem-5-4 {n = 0} {A = A} {hA = hA} = G.Iso'→Iso (G.iso' (pathToIso (cong (λ x → type (π'^ zero x)) (idemTrunc' hA))) {!!})
-theorem-5-4 {n = suc n} {A = A} {Ac = Ac} {hA = hA} = G.compIso {!lemma-5-3 Ac!} (theorem-5-4 {n = n} {A = A} {hA = hA})
-  where
-    lemma : {l : ℕ} → G.Iso (π'^ (suc l) (K' (suc l) A)) (π'^ (suc l) (Susp'^ l A))
-    lemma = G.compIso {!!} {!!}
+theorem-5-4 : {n : ℕ} {A : Pointed {ℓ}} {Ac : isConnected 2 (A .fst)} {hA : isOfHLevel 3 (A .fst)} → (π'^ n (K' n A)) ≡ (π'^ zero A)
+theorem-5-4 {n = 0} {A = A} {hA = hA} = {!!}
+theorem-5-4 {n = suc n} {A = A} {Ac = Ac} {hA = hA} = {!!}
+

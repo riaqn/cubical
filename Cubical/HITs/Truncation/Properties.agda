@@ -84,13 +84,16 @@ isOfHLevel→isSphereFilled {n = suc (suc n)} {A = A} h = helper λ x y → isOf
       f' : S n → f north ≡ f south
       f' x i = f (merid x i)
 
+      h' : sphereFill f'
+      h' = h (f north) (f south) f'
+
       r : (x : S (suc n)) → l ≡ f x
       r north = refl
-      r south = h (f north) (f south) f' .fst
-      r (merid p i) j = hcomp (λ k → λ { (i = i0) → f north
-                                        ; (i = i1) → h (f north) (f south) f' .snd p (~ k) j
+      r south = h' .fst
+      r (merid x i) j = hcomp (λ k → λ { (i = i0) → f north
+                                        ; (i = i1) → h' .snd x (~ k) j
                                         ; (j = i0) → f north
-                                        ; (j = i1) → f (merid p i) }) (f (merid p (i ∧ j)))
+                                        ; (j = i1) → f (merid x i) }) (f (merid x (i ∧ j)))
 
 isOfHLevel∥∥ : isOfHLevel (suc n) (∥ A ∥ (suc n))
 isOfHLevel∥∥ = isSphereFilled→isOfHLevel isSphereFilled∥∥

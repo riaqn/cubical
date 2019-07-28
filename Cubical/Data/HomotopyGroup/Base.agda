@@ -1,16 +1,17 @@
-{-# OPTIONS --cubical --allow-unsolved-metas #-}
+{-# OPTIONS --cubical --safe #-}
 module Cubical.Data.HomotopyGroup.Base where
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Data.Nat
 open import Cubical.HITs.Truncation
 open import Cubical.Foundations.HLevels
-open import Cubical.Data.Group 
+open import Cubical.Data.Group as G using (Group)
 open import Cubical.Data.Sigma
-open import Cubical.Data.Pointed hiding (_≃_)
+open import Cubical.Data.Pointed as P using (Pointed) 
 import Cubical.Foundations.GroupoidLaws as GL
 import Cubical.Foundations.Isomorphism as I
 import Cubical.Foundations.Equiv as E
+import Cubical.Core.Glue as Gl
 
 
 Ω : ∀ {ℓ} → Pointed {ℓ} → Pointed {ℓ}
@@ -65,7 +66,7 @@ hLevelΩ^ {k = suc k} {n = n} A hA = hLevelΩ {n = 1 + n} A' (hLevelΩ^ {k = k} 
 Ω^≡Ω'^ i n x = iterate≡iterate' i n Ω x
 
 π^ : ∀ {ℓ} → ℕ → Pointed {ℓ} → Group {ℓ}
-π^ {ℓ} n p = group (∥ A ∥ 2) squash g
+π^ {ℓ} n p = G.group (∥ A ∥ 2) squash g
   where
     n' : ℕ
     n' = suc n
@@ -76,8 +77,8 @@ hLevelΩ^ {k = suc k} {n = n} A hA = hLevelΩ {n = 1 + n} A' (hLevelΩ^ {k = k} 
     squash : isOfHLevel 2 (∥ A ∥ 2)
     squash = isOfHLevel∥∥ {n = 1}
 
-    g : isGroup (∥ A ∥ 2)
-    g = group-struct e _⁻¹ _⊙_ lUnit rUnit assoc lCancel rCancel
+    g : G.isGroup (∥ A ∥ 2)
+    g = G.group-struct e _⁻¹ _⊙_ lUnit rUnit assoc lCancel rCancel
       where
         e : ∥ A ∥ 2
         e = ∣ (Ω^ n') p .snd ∣
@@ -109,10 +110,13 @@ hLevelΩ^ {k = suc k} {n = n} A hA = hLevelΩ {n = 1 + n} A' (hLevelΩ^ {k = k} 
                   λ a → cong ∣_∣ (GL.rCancel _)
 
 π'^ : ∀ {ℓ} → ℕ → Pointed {ℓ} → Group {ℓ}
-π'^ {ℓ} n p = transportGroup (π^ n p) (cong (λ o → ∥ o (suc n) p .fst ∥ 2) Ω^≡Ω'^)
+π'^ {ℓ} n p = G.transportGroup (π^ n p) (cong (λ o → ∥ o (suc n) p .fst ∥ 2) Ω^≡Ω'^)
 
-Ω-group : ∀ {ℓ} (k : ℕ) → (A : Pointed {ℓ}) → (hA : isOfHLevel (3 + k) (A .fst)) → Group {ℓ}
-Ω-group k A hA = group (Ω^ (1 + k) A .fst) (hLevelΩ^ {k = 1 + k} {n = 0} A (subst (λ x → isOfHLevel x (A .fst)) helper hA)) (group-struct refl sym _∙_ (λ _ → sym (GL.lUnit _) ) (λ _ → sym (GL.rUnit _)) (λ _ _ _ → sym (GL.assoc _ _ _)) GL.lCancel GL.rCancel)
+π^≡π'^ : ∀ {ℓ} → π^ {ℓ} ≡ π'^ {ℓ}
+π^≡π'^ = funExt λ n → funExt (λ x → G.transportGroup≡ ((cong (λ o → ∥ o (suc n) x .fst ∥ 2) Ω^≡Ω'^)))
+
+Ω^-group : ∀ {ℓ} (k : ℕ) → (A : Pointed {ℓ}) → (hA : isOfHLevel (3 + k) (A .fst)) → Group {ℓ}
+Ω^-group k A hA = G.group (Ω^ (1 + k) A .fst) (hLevelΩ^ {k = 1 + k} {n = 0} A (subst (λ x → isOfHLevel x (A .fst)) helper hA)) (G.group-struct refl sym _∙_ (λ _ → sym (GL.lUnit _) ) (λ _ → sym (GL.rUnit _)) (λ _ _ _ → sym (GL.assoc _ _ _)) GL.lCancel GL.rCancel)
   where
     helper : 3 + k ≡ 1 + k + 2 + 0
     helper = cong suc
@@ -124,9 +128,31 @@ hLevelΩ^ {k = suc k} {n = n} A hA = hLevelΩ {n = 1 + n} A' (hLevelΩ^ {k = k} 
 ∥_∥'_ : (A : Pointed {ℓ}) (n : ℕ) → Pointed {ℓ}
 ∥ A ∥' n = (∥ A .fst ∥ n , ∣ A .snd ∣)
 
-π^≡Ω-group : ∀ {ℓ k} (A :  Pointed {ℓ}) → (hA : isOfHLevel (3 + k) (A .fst)) → π^ k A ≡ Ω-group k A hA
-π^≡Ω-group = {!!}
+π^≡Ω^-group : ∀ {ℓ k} (A :  Pointed {ℓ}) → (hA : isOfHLevel (3 + k) (A .fst)) → π^ k A ≡ Ω^-group k A hA
+π^≡Ω^-group {k = k} A hA = G.ua ( f , fmorph)
+  where
+    f : (Group.type (π^ k A))  Gl.≃
+        (Group.type (Ω^-group k A hA))
+    f = idemTrunc (Group.setStruc (Ω^-group k A hA))
 
+    fmorph : G.isMorph (π^ k A) (Ω^-group k A hA) (f .fst)
+    fmorph = ind2 (λ _ _ → hLevelLift {n = 2} 1 (Group.setStruc (Ω^-group k A hA)) _ _) λ _ _ → refl
 
-π^≡Ω-group∥ : ∀ {ℓ k} (A :  Pointed {ℓ}) → π^ k A ≡ Ω-group k (∥ A ∥' (3 + k)) (isOfHLevel∥∥ {n = 2 + k})
-π^≡Ω-group∥ A = {!!}
+-- π≡Ω-group∥ : ∀ {ℓ} (A :  Pointed {ℓ}) → π^ 0 A ≡ Ω^-group 0 (∥ A ∥' 3) (isOfHLevel∥∥ {n = 2})
+-- π≡Ω-group∥ A = G.ua ({!f!} , {!!})
+--   where
+--     f : (∥ snd A ≡ snd A ∥ 2) Gl.≃ (∣ A .snd ∣ ≡ ∣ A .snd ∣)
+--     f = E.isoToEquiv (I.iso {!!} {!!} {!!} {!!})
+--       where
+--       intro : ∥ snd A ≡ snd A ∥ 2 → ∣ A .snd ∣ ≡ ∣ A .snd ∣
+--       intro = ind (λ _ → isOfHLevel∥∥ {n = 2} _ _) (cong ∣_∣)
+
+--       elim : ∣ A .snd ∣ ≡ ∣ A .snd ∣ → ∥ snd A ≡ snd A ∥ 2
+--       elim = {!!}
+
+-- π^≡Ω^-group∥ : ∀ {ℓ k} (A :  Pointed {ℓ}) → π^ k A ≡ Ω^-group k (∥ A ∥' (3 + k)) (isOfHLevel∥∥ {n = 2 + k})
+-- π^≡Ω^-group∥ {k = k} A = G.ua ({!!} , {!!})
+--   where
+--   f : Group.type (π^ k A) Gl.≃
+--       Group.type (Ω^-group k (∥ A ∥' (3 + k)) isOfHLevel∥∥)
+--   f = {!!}
