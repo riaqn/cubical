@@ -154,8 +154,14 @@ some-result {ℓ} {G = G} = p0 ∙ (sym p1)
       struc1 : Struc (G' ≡ G') refl _∙_
       struc1 = transport (sym q) struc0
         where
+          record Param {ℓ'} : Type (ℓ-suc ℓ') where
+            constructor param
+            field
+              A : Type ℓ'
+              a-id : A
+              a-comp : A → A → A
           q : Struc (G' ≡ G') refl _∙_ ≡ Struc (G .type ≡ G .type) refl _∙_ 
-          q i = Struc (p i) (p-id i) (p-comp i)
+          q = cong F param0≡param1
             where
               p : (G' ≡ G') ≡ (G .type ≡ G .type)
               p = U.ua (E.invEquiv e)
@@ -166,6 +172,18 @@ some-result {ℓ} {G = G} = p0 ∙ (sym p1)
               p-comp : PathP (λ i → p i → p i → p i) _∙_ _∙_
               p-comp i g0 g1 = glue (λ { (i = i0) → g0 ∙ g1 ; (i = i1) → g0 ∙ g1 })
                                     ((unglue (i ∨ ~ i) g0) ∙ (unglue (i ∨ ~ i) g1))
+
+              param0 : Param
+              param0 = param (G' ≡ G') refl _∙_
+
+              param1 : Param
+              param1 = param (G .type ≡ G .type) refl _∙_
+
+              F : Param → Type _
+              F (param A a-id a-comp) = Struc A a-id a-comp
+
+              param0≡param1 : param0 ≡ param1
+              param0≡param1 i = param (p i) (p-id i) (p-comp i)
 
       Gloop = Struc.f struc1
       Gloop-id = Struc.f-id struc1
