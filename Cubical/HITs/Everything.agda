@@ -24,3 +24,4 @@ open import Cubical.HITs.SetQuotients public
 open import Cubical.HITs.FiniteMultiset public hiding ( _++_ ; [_] ; assoc-++ )
 open import Cubical.HITs.Sn public
 open import Cubical.HITs.Truncation public
+open import Cubical.HITs.EMSpace
