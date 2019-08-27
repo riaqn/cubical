@@ -194,9 +194,16 @@ some-result {ℓ} {G = G} = p0 ∙ (sym p1)
                                           ; (j = i1) → loop g (i ∨ ~ k) })
                                 (loop helper j)
                           where
-                          helper = hcomp (λ j → λ { (i = i0) → G .groupStruc .comp (transportRefl x j) (transportRefl g j)
-                                                  ; (i = i1) → transportRefl x j
-                                                  }) (unglue (i ∨ ~ i) (unglue (i ∨ ~ i) x))
+                            q : hcomp (λ k → λ { (i = i0) → G .type ; (i = i1) → G .type}) (Codes.Struc.f Codes.struc0 (transport refl g) i) ≡
+                                (Codes.Struc.f Codes.struc0 (transport refl g) i)
+                            q k = hfill (λ k → λ { (i = i0) → G .type
+                                                  ; (i = i1) → G .type}) (inS (Codes.Struc.f Codes.struc0 (transport refl g) i)) (~ k)
+                            x' : (Codes.Struc.f Codes.struc0 (transport refl g) i)
+                            x' = transport q x
+
+                            helper = hcomp (λ k → λ { (i = i0) → G .groupStruc .comp (transportRefl x k) (transportRefl g k)
+                                                    ; (i = i1) → transportRefl x k
+                                                    }) (unglue (i ∨ ~ i) x')
 
     encode-decode : (c : codes (snd (iterate 0 Ω (EMSpace1Pointed G))) .fst) →
                   transport (cong (λ x → codes x .fst) (decode {a = base} c))
